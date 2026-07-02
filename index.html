@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Color Match Cards</title>
+    <link rel="stylesheet" href="styles/style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="top-bar">
+        <div>
+          <p class="eyebrow">1 Player vs CPU</p>
+          <h1>Color Match Cards</h1>
+        </div>
+        <div class="score-strip" aria-live="polite">
+          <span>CPU</span>
+          <strong id="cpu-count">0</strong>
+        </div>
+      </header>
+
+      <section class="table-area" aria-label="Game table">
+        <div class="cpu-hand" id="cpu-hand" aria-label="CPU hand"></div>
+
+        <div class="play-zone">
+          <button class="deck-pile" id="draw-card" type="button">
+            <span class="deck-count" id="deck-count">0</span>
+            <span>Draw</span>
+          </button>
+
+          <div class="discard-wrap">
+            <div id="discard-card" class="card large neutral">Start</div>
+            <div class="status-line" id="current-status">Preparing game...</div>
+          </div>
+
+          <div class="game-facts">
+            <div>
+              <span>Current color</span>
+              <strong id="current-color">-</strong>
+            </div>
+            <div>
+              <span>Turn</span>
+              <strong id="turn-label">-</strong>
+            </div>
+            <div>
+              <span>Penalty</span>
+              <strong id="penalty-label">None</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="message" id="message" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="controls-area" aria-label="Controls">
+        <div class="settings-panel">
+          <div class="settings-title">Local rules</div>
+          <label><input type="checkbox" id="rule-same-number" /> Same number stack</label>
+          <label><input type="checkbox" id="rule-draw-two" /> Draw Two stack</label>
+          <label><input type="checkbox" id="rule-draw-four" /> Wild Draw Four stack</label>
+          <label><input type="checkbox" id="rule-two-to-four" /> Draw Two to Wild Draw Four</label>
+          <p class="rule-note">
+            Wild Draw Four cannot be followed by Draw Two. If a draw chain is not stacked, the next player draws all cards.
+          </p>
+        </div>
+
+        <div class="action-panel">
+          <button id="play-stack" type="button" class="primary-action" disabled>Play selected cards</button>
+          <button id="restart" type="button" class="secondary-action">Restart</button>
+        </div>
+      </section>
+
+      <section class="player-zone" aria-label="Player hand">
+        <div class="hand-header">
+          <h2>Your hand</h2>
+          <span id="player-count">0 cards</span>
+        </div>
+        <div class="hand" id="player-hand"></div>
+      </section>
+
+      <dialog id="color-dialog" class="color-dialog">
+        <form method="dialog">
+          <h2>Choose a color</h2>
+          <div class="color-grid">
+            <button value="red" class="color-choice red" type="submit">Red</button>
+            <button value="blue" class="color-choice blue" type="submit">Blue</button>
+            <button value="yellow" class="color-choice yellow" type="submit">Yellow</button>
+            <button value="green" class="color-choice green" type="submit">Green</button>
+          </div>
+        </form>
+      </dialog>
+    </main>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>

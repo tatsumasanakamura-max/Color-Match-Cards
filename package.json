@@ -1,0 +1,9 @@
+{
+  "name": "color-match-cards",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check src/main.js && node --check src/game.js && node --check src/ui.js && node --check src/cpu.js"
+  }
+}

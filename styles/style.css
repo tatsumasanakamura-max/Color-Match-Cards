@@ -57,6 +57,8 @@ p {
 /* 画面共通 */
 .app-shell {
   width: min(1180px, 100%);
+  min-height: 100vh;
+  min-height: 100dvh;
   height: 100dvh;
   margin: 0 auto;
   padding: clamp(10px, 2vw, 18px);
@@ -165,8 +167,10 @@ p {
 
 /* ゲームレイアウト */
 .game-screen {
+  min-height: 100%;
+  height: 100%;
   display: grid;
-  grid-template-rows: auto auto minmax(108px, 1fr) auto minmax(78px, 0.62fr) minmax(190px, 1.85fr) auto;
+  grid-template-rows: auto auto minmax(108px, 1fr) auto auto auto auto minmax(190px, 1.85fr) auto;
   gap: clamp(5px, 1.1vh, 10px);
   overflow: hidden;
 }
@@ -209,14 +213,26 @@ p {
 .cpu-hand {
   min-width: 0;
   display: flex;
+  align-items: center;
   gap: 4px;
   overflow: hidden;
+}
+
+.cpu-extra {
+  min-width: 34px;
+  min-height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #172130;
+  background: #dfe7f0;
+  font-weight: 900;
 }
 
 .table-area {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(76px, 116px) minmax(104px, 154px) minmax(180px, 1fr);
+  grid-template-columns: minmax(76px, 116px) minmax(104px, 154px);
   align-items: center;
   justify-content: center;
   gap: clamp(8px, 2vw, 16px);
@@ -309,8 +325,15 @@ p {
 .info-row {
   min-height: 0;
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1.25fr;
+  grid-template-columns: 1fr minmax(160px, 0.72fr);
   gap: 8px;
+}
+
+.notice-area {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .message,
@@ -560,7 +583,7 @@ p {
   }
 
   .game-screen {
-    grid-template-rows: auto auto minmax(102px, 0.95fr) auto minmax(78px, 0.68fr) minmax(208px, 1.9fr) auto;
+    grid-template-rows: auto auto minmax(100px, 0.9fr) auto auto auto auto minmax(210px, 1.8fr) auto;
     gap: 6px;
   }
 
@@ -608,6 +631,266 @@ p {
 
   .hand.crowded-cards {
     --card-w: clamp(38px, 10vw, 54px);
+  }
+}
+
+@media (max-width: 600px) and (orientation: portrait) {
+  :root {
+    --card-w: clamp(48px, 15.8vw, 64px);
+  }
+
+  body {
+    overflow: hidden;
+  }
+
+  .app-shell {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: 100dvh;
+    padding: 0;
+  }
+
+  .game-screen {
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: 100dvh;
+    grid-template-rows: auto auto auto auto 34px auto minmax(46px, 58px) minmax(0, 1fr) auto;
+    gap: 5px;
+    padding:
+      max(8px, env(safe-area-inset-top))
+      8px
+      max(8px, env(safe-area-inset-bottom))
+      8px;
+    overflow: hidden;
+  }
+
+  .game-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .game-header .eyebrow {
+    display: none;
+  }
+
+  .game-title {
+    font-size: clamp(1.28rem, 6.4vw, 1.75rem);
+    line-height: 1.05;
+    white-space: nowrap;
+  }
+
+  .header-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .header-actions .compact {
+    min-height: 28px;
+    padding: 0 8px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+  }
+
+  .cpu-strip {
+    min-height: 38px;
+    padding: 5px 7px;
+    gap: 7px;
+  }
+
+  .cpu-hand {
+    justify-content: flex-end;
+  }
+
+  .card.back,
+  .cpu-card-back {
+    width: clamp(24px, 7vw, 32px);
+    min-width: clamp(22px, 6.5vw, 30px);
+  }
+
+  .cpu-extra {
+    min-width: 28px;
+    min-height: 24px;
+    font-size: 0.78rem;
+  }
+
+  .table-area {
+    grid-template-columns: minmax(72px, 96px) minmax(78px, 104px);
+    min-height: 104px;
+    align-content: center;
+    gap: 10px;
+  }
+
+  .deck-pile {
+    width: clamp(72px, 23vw, 94px);
+    justify-self: end;
+  }
+
+  .card.large {
+    width: clamp(78px, 25vw, 102px);
+  }
+
+  .status-line {
+    display: none;
+  }
+
+  .status-area {
+    min-height: 30px;
+  }
+
+  .game-facts {
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .game-facts div {
+    min-width: 0;
+    flex: 1 1 0;
+    padding: 4px 6px;
+    border-radius: 999px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .game-facts span {
+    display: inline;
+    font-size: 0.64rem;
+  }
+
+  .game-facts strong {
+    display: inline;
+    margin: 0 0 0 3px;
+    font-size: clamp(0.76rem, 3vw, 0.9rem);
+  }
+
+  .notice-area {
+    min-height: 34px;
+  }
+
+  .notice-message {
+    min-height: 30px;
+    width: 100%;
+    display: grid;
+    place-items: center;
+    padding: 5px 8px;
+    border-radius: 10px;
+    font-size: clamp(0.82rem, 3.4vw, 0.98rem);
+    line-height: 1.18;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .penalty-banner {
+    grid-template-columns: 1fr;
+    gap: 1px;
+    padding: 5px 8px;
+    font-size: 0.78rem;
+  }
+
+  .penalty-banner small {
+    display: none;
+  }
+
+  .log-area {
+    min-height: 46px;
+    max-height: 58px;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .action-log {
+    min-height: 46px;
+    max-height: 58px;
+    padding: 4px 5px;
+    gap: 3px;
+    font-size: clamp(0.7rem, 2.8vw, 0.84rem);
+  }
+
+  .action-log li {
+    min-height: 18px;
+    padding: 3px 7px;
+    border-radius: 10px;
+    line-height: 1.18;
+  }
+
+  .player-zone {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
+  }
+
+  .hand-header {
+    flex: 0 0 auto;
+    gap: 6px;
+  }
+
+  .hand-header h2 {
+    font-size: 0.94rem;
+  }
+
+  .hand-header #player-count {
+    font-size: 0.88rem;
+    font-weight: 900;
+  }
+
+  .play-hint {
+    display: none;
+  }
+
+  .hand {
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-columns: repeat(auto-fit, minmax(var(--card-w), 1fr));
+    align-content: start;
+    gap: 4px;
+    padding: 4px 0 2px;
+    overflow: hidden;
+  }
+
+  .hand.many-cards {
+    --card-w: clamp(40px, 13.5vw, 54px);
+  }
+
+  .hand.crowded-cards {
+    --card-w: clamp(36px, 12vw, 48px);
+    overflow-y: auto;
+  }
+
+  .card {
+    padding: 5px;
+    border-radius: 7px;
+    touch-action: none;
+  }
+
+  .card-sub,
+  .card small {
+    font-size: clamp(0.52rem, 2.4vw, 0.64rem);
+  }
+
+  .card strong {
+    font-size: clamp(1.45rem, 7.6vw, 2.05rem);
+  }
+
+  .action-panel {
+    min-height: auto;
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+
+  .action-panel .primary-action {
+    width: 100%;
+    min-height: 44px;
+    border-radius: 12px;
+    font-size: 0.96rem;
   }
 }
 
@@ -659,5 +942,21 @@ p {
 
   .color-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 430px) and (orientation: portrait) {
+  .game-header {
+    align-items: center;
+  }
+
+  .header-actions .compact {
+    min-height: 28px;
+    padding: 0 8px;
+    font-size: 0.78rem;
+  }
+
+  .card strong {
+    font-size: clamp(1.45rem, 7.6vw, 2.05rem);
   }
 }

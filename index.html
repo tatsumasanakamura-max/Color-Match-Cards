@@ -56,7 +56,7 @@
         <header class="game-header">
           <div>
             <p class="eyebrow">ひとりであそぶ</p>
-            <h1>カラーマッチカード</h1>
+            <h1 class="game-title">カラーマッチカード</h1>
           </div>
           <div class="header-actions">
             <button id="back-title" class="secondary-action compact" type="button">メニュー</button>
@@ -64,13 +64,13 @@
           </div>
         </header>
 
-        <section class="cpu-strip" aria-label="CPU情報">
+        <section class="cpu-strip cpu-area" aria-label="CPU情報">
           <strong>CPU</strong>
           <span id="cpu-count">0枚</span>
           <div class="cpu-hand" id="cpu-hand" aria-label="CPUの手札"></div>
         </section>
 
-        <section class="table-area" aria-label="場">
+        <section class="table-area field-area" aria-label="場">
           <button class="deck-pile" id="draw-card" type="button">
             <span class="deck-count" id="deck-count">0</span>
             <span id="draw-label">1枚引く</span>
@@ -80,21 +80,27 @@
             <div id="discard-card" class="card large neutral">開始</div>
             <div class="status-line" id="current-status">準備中...</div>
           </div>
+        </section>
 
+        <section class="status-area" aria-label="現在状態">
           <div class="game-facts">
-            <div>
+            <div class="status-chip">
               <span>現在の色</span>
               <strong id="current-color">-</strong>
             </div>
-            <div>
+            <div class="status-chip">
               <span>手番</span>
               <strong id="turn-label">-</strong>
             </div>
-            <div>
+            <div class="status-chip">
               <span>累積ドロー</span>
               <strong id="penalty-label">なし</strong>
             </div>
           </div>
+        </section>
+
+        <section class="notice-area" aria-label="一時メッセージ">
+          <div class="message notice-message" id="message" role="status" aria-live="polite"></div>
         </section>
 
         <section class="penalty-banner" id="penalty-banner" aria-live="polite" hidden>
@@ -103,22 +109,21 @@
           <small id="penalty-help">出せるカードがなければ引きます</small>
         </section>
 
-        <section class="info-row" aria-label="状態表示">
-          <div class="message" id="message" role="status" aria-live="polite"></div>
+        <section class="info-row log-area" aria-label="行動ログ">
           <ol class="action-log" id="action-log" aria-label="行動ログ"></ol>
           <div class="active-rules" id="active-rules"></div>
         </section>
 
-        <section class="player-zone" aria-label="自分の手札">
-          <div class="hand-header">
+        <section class="player-zone player-area" aria-label="自分の手札">
+          <div class="hand-header player-hand-header">
             <h2>自分の手札</h2>
             <span class="play-hint">出せるカードを上にフリック</span>
             <span id="player-count">0枚</span>
           </div>
-          <div class="hand" id="player-hand"></div>
+          <div class="hand player-hand" id="player-hand"></div>
         </section>
 
-        <section class="action-panel" aria-label="操作">
+        <section class="action-panel action-area" aria-label="操作">
           <button id="play-stack" type="button" class="primary-action" disabled>選んだカードを出す</button>
         </section>
       </section>

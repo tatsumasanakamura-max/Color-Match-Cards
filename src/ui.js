@@ -121,7 +121,7 @@ function renderGame(els, state, selectedOrder, handlers) {
   const selected = selectedCards(player.hand, selectedOrder);
 
   els.cpuCount.textContent = `${cpu.hand.length}枚`;
-  els.cpuHand.innerHTML = cpu.hand.map(() => `<div class="card back" aria-hidden="true"></div>`).join("");
+  els.cpuHand.innerHTML = cpuBackMarkup(cpu.hand.length);
   els.deckCount.textContent = state.deck.length;
   renderCard(els.discardCard, topDiscard(state), true, state.currentColor);
   els.currentStatus.textContent = state.isGameOver
@@ -158,7 +158,29 @@ function renderRules(els, rules) {
 }
 
 function renderLog(els, logs) {
-  els.actionLog.innerHTML = logs.map((log) => `<li>${escapeHtml(log)}</li>`).join("");
+  els.actionLog.innerHTML = logs
+    .slice(0, 2)
+    .map((log) => `<li>${escapeHtml(shortLog(log))}</li>`)
+    .join("");
+}
+
+function cpuBackMarkup(count) {
+  const visible = Math.min(count, 6);
+  const backs = Array.from({ length: visible }, () => `<div class="card back cpu-card-back" aria-hidden="true"></div>`);
+  if (count > visible) backs.push(`<span class="cpu-extra">+${count - visible}</span>`);
+  return backs.join("");
+}
+
+function shortLog(log) {
+  return log
+    .replace(/^CPUが(.+)を出しました.*$/, "CPU：$1を出しました")
+    .replace(/^CPUは(\d+)枚引きました$/, "CPU：$1枚引きました")
+    .replace(/^CPUは1枚引きました$/, "CPU：1枚引きました")
+    .replace(/^CPUは出せるカードを引きました$/, "CPU：1枚引きました")
+    .replace(/^あなたが(.+)を出しました.*$/, "あなた：$1を出しました")
+    .replace(/^あなたは(\d+)枚引きました$/, "あなた：$1枚引きました")
+    .replace(/^あなたは1枚引きました$/, "あなた：1枚引きました")
+    .replace(/^あなたの番です$/, "あなたの番です");
 }
 
 function renderHand(els, state, player, selectedSet, selectedOrder, isPlayerTurn, handlers) {

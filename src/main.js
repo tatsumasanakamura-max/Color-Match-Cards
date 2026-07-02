@@ -1,4 +1,4 @@
-import { createGame, currentPlayer, drawForCurrentPlayer, playCards } from "./game.js";
+import { canPlayCard, createGame, currentPlayer, drawForCurrentPlayer, playCards } from "./game.js";
 import { takeCpuTurn } from "./cpu.js";
 import { createUI } from "./ui.js";
 
@@ -71,6 +71,11 @@ function toggleCard(card) {
   renderGame();
 }
 
+function cardUnavailable() {
+  state.message = "このカードはまだ出せません。";
+  renderGame();
+}
+
 async function playSelected() {
   const cards = selectedOrder
     .map((id) => state.players[0].hand.find((card) => card.id === id))
@@ -78,6 +83,35 @@ async function playSelected() {
   const needsColor = cards[cards.length - 1]?.type === "wild";
   const color = needsColor ? await ui.askColor() : null;
   const result = playCards(state, cards, color);
+
+  if (!result.ok) state.message = result.message;
+  selectedOrder = [];
+  renderGame();
+}
+
+async function flickCard(card) {
+  const player = state.players[0];
+  const isPlayerTurn = currentPlayer(state) === player && !state.isGameOver;
+
+  if (!isPlayerTurn) {
+    state.message = "今は操作できません。";
+    renderGame();
+    return;
+  }
+
+  if (selectedOrder.length > 1 && selectedOrder.includes(card.id)) {
+    await playSelected();
+    return;
+  }
+
+  if (!canPlayCard(state, card)) {
+    state.message = "このカードはまだ出せません。";
+    renderGame();
+    return;
+  }
+
+  const color = card.type === "wild" ? await ui.askColor() : null;
+  const result = playCards(state, [card], color);
 
   if (!result.ok) state.message = result.message;
   selectedOrder = [];
@@ -109,6 +143,8 @@ ui = createUI({
   applyPreset,
   showScreen,
   startGame,
+  flickCard,
+  cardUnavailable,
 });
 
 showScreen("title");

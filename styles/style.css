@@ -10,7 +10,7 @@
   --blue: #2874cf;
   --yellow: #f3c94d;
   --green: #28a36b;
-  --card-w: clamp(58px, 10.5vw, 92px);
+  --card-w: clamp(54px, 9vw, 86px);
   font-family: "Yu Gothic UI", "Hiragino Kaku Gothic ProN", Meiryo, system-ui, sans-serif;
 }
 
@@ -166,8 +166,8 @@ p {
 /* ゲームレイアウト */
 .game-screen {
   display: grid;
-  grid-template-rows: auto auto minmax(122px, 1.15fr) auto minmax(82px, 0.72fr) minmax(176px, 1.6fr) auto;
-  gap: clamp(6px, 1.4vh, 12px);
+  grid-template-rows: auto auto minmax(108px, 1fr) auto minmax(78px, 0.62fr) minmax(190px, 1.85fr) auto;
+  gap: clamp(5px, 1.1vh, 10px);
   overflow: hidden;
 }
 
@@ -323,10 +323,27 @@ p {
 
 .action-log {
   margin: 0;
-  padding: 8px 10px 8px 28px;
+  min-height: 58px;
+  max-height: 72px;
+  padding: 7px 8px;
   font-size: 0.85rem;
   font-weight: 800;
   overflow: hidden;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.action-log li {
+  min-height: 18px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .player-zone {
@@ -340,13 +357,31 @@ p {
   font-size: clamp(1rem, 3vw, 1.3rem);
 }
 
+.play-hint {
+  color: var(--muted);
+  font-size: clamp(0.72rem, 2.4vw, 0.9rem);
+  font-weight: 900;
+}
+
 .hand {
   min-height: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: clamp(6px, 1.4vw, 9px);
-  padding: 10px 4px 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--card-w), 1fr));
+  align-content: center;
+  align-items: center;
+  justify-items: center;
+  gap: clamp(5px, 1.1vw, 8px);
+  padding: 8px 4px 12px;
+  overflow: hidden;
+}
+
+.hand.many-cards {
+  --card-w: clamp(46px, 7.2vw, 72px);
+}
+
+.hand.crowded-cards {
+  --card-w: clamp(42px, 6.2vw, 64px);
+  align-content: start;
   overflow-y: auto;
 }
 
@@ -373,6 +408,7 @@ p {
   align-content: space-between;
   text-align: left;
   transition: transform 0.14s ease, filter 0.14s ease, outline-color 0.14s ease;
+  touch-action: none;
   outline: 3px solid transparent;
 }
 
@@ -394,6 +430,11 @@ p {
 .card.selected {
   transform: translateY(-12px);
   outline-color: #111927;
+}
+
+.card.dragging {
+  transform: translateY(-12px) scale(1.04);
+  z-index: 10;
 }
 
 .card.large {
@@ -511,7 +552,7 @@ p {
 /* タブレット・スマートフォン */
 @media (max-width: 760px) {
   :root {
-    --card-w: clamp(56px, 16vw, 78px);
+    --card-w: clamp(48px, 13vw, 70px);
   }
 
   .app-shell {
@@ -519,8 +560,8 @@ p {
   }
 
   .game-screen {
-    grid-template-rows: auto auto minmax(112px, 1fr) auto minmax(112px, 1fr) minmax(188px, 1.62fr) auto;
-    gap: 7px;
+    grid-template-rows: auto auto minmax(102px, 0.95fr) auto minmax(78px, 0.68fr) minmax(208px, 1.9fr) auto;
+    gap: 6px;
   }
 
   .table-area {
@@ -537,10 +578,16 @@ p {
 
   .message,
   .active-rules {
-    min-height: 34px;
+    min-height: 30px;
   }
 
   .action-log {
+    min-height: 48px;
+    max-height: 60px;
+    font-size: clamp(0.72rem, 2.5vw, 0.85rem);
+  }
+
+  .active-rules {
     display: none;
   }
 
@@ -552,13 +599,21 @@ p {
 
   .hand {
     max-height: 100%;
-    justify-content: center;
+    grid-template-columns: repeat(auto-fit, minmax(var(--card-w), 1fr));
+  }
+
+  .hand.many-cards {
+    --card-w: clamp(42px, 11.5vw, 60px);
+  }
+
+  .hand.crowded-cards {
+    --card-w: clamp(38px, 10vw, 54px);
   }
 }
 
 @media (max-width: 430px) {
   :root {
-    --card-w: clamp(52px, 21vw, 72px);
+    --card-w: clamp(44px, 18vw, 62px);
   }
 
   .game-header {
@@ -587,7 +642,19 @@ p {
   }
 
   .card strong {
-    font-size: clamp(1.9rem, 11vw, 2.8rem);
+    font-size: clamp(1.65rem, 9vw, 2.35rem);
+  }
+
+  .play-hint {
+    display: none;
+  }
+
+  .hand.many-cards {
+    --card-w: clamp(38px, 15vw, 52px);
+  }
+
+  .hand.crowded-cards {
+    --card-w: clamp(34px, 13vw, 48px);
   }
 
   .color-grid {

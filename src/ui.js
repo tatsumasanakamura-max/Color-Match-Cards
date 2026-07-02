@@ -8,6 +8,10 @@ const ruleLabels = {
   drawTwoToDrawFourStack: "+2に色変え+4",
 };
 
+const FLICK_MIN_DISTANCE = 40;
+const FLICK_MAX_TIME = 500;
+const FLICK_MAX_SIDE_DISTANCE = 80;
+
 export function createUI(handlers) {
   const els = {
     screens: {
@@ -159,6 +163,9 @@ function renderLog(els, logs) {
 
 function renderHand(els, state, player, selectedSet, selectedOrder, isPlayerTurn, handlers) {
   els.playerHand.innerHTML = "";
+  els.playerHand.dataset.count = player.hand.length;
+  els.playerHand.classList.toggle("many-cards", player.hand.length >= 14);
+  els.playerHand.classList.toggle("crowded-cards", player.hand.length >= 20);
   const selected = selectedCards(player.hand, selectedOrder);
   player.hand.forEach((card) => {
     const playable = canPlayCard(state, card);
@@ -167,11 +174,64 @@ function renderHand(els, state, player, selectedSet, selectedOrder, isPlayerTurn
     const button = document.createElement("button");
     button.type = "button";
     button.className = cardClasses(card, isSelected, selectable, state.currentColor);
-    button.disabled = !isPlayerTurn || !selectable;
+    button.disabled = !isPlayerTurn;
     button.innerHTML = cardMarkup(card, selectionIndex(card, selectedOrder));
     button.title = selectable ? "選べるカード" : "今は出せないカード";
-    button.addEventListener("click", () => handlers.toggleCard(card));
+    addCardControls(button, card, selectable, handlers);
     els.playerHand.append(button);
+  });
+}
+
+function addCardControls(button, card, selectable, handlers) {
+  let pointerStart = null;
+  let skipNextClick = false;
+
+  button.addEventListener("pointerdown", (event) => {
+    pointerStart = {
+      x: event.clientX,
+      y: event.clientY,
+      time: Date.now(),
+      pointerId: event.pointerId,
+    };
+    button.classList.add("dragging");
+    button.setPointerCapture?.(event.pointerId);
+  });
+
+  button.addEventListener("pointercancel", () => {
+    pointerStart = null;
+    button.classList.remove("dragging");
+  });
+
+  button.addEventListener("pointerup", (event) => {
+    if (!pointerStart || pointerStart.pointerId !== event.pointerId) return;
+
+    const dx = event.clientX - pointerStart.x;
+    const dy = event.clientY - pointerStart.y;
+    const dt = Date.now() - pointerStart.time;
+    const isUpFlick = dy < -FLICK_MIN_DISTANCE && Math.abs(dx) < FLICK_MAX_SIDE_DISTANCE && dt < FLICK_MAX_TIME;
+
+    pointerStart = null;
+    button.classList.remove("dragging");
+
+    if (isUpFlick) {
+      skipNextClick = true;
+      event.preventDefault();
+      event.stopPropagation();
+      handlers.flickCard(card);
+    }
+  });
+
+  button.addEventListener("click", () => {
+    if (skipNextClick) {
+      skipNextClick = false;
+      return;
+    }
+
+    if (selectable) {
+      handlers.toggleCard(card);
+    } else {
+      handlers.cardUnavailable();
+    }
   });
 }
 

@@ -1,44 +1,86 @@
-# Color Match Cards
+# カラーマッチカード
 
-Color Match Cards is a browser card game inspired by color and value matching rules. It uses original naming, UI, and card artwork so it can be published as an independent GitHub Pages project.
+カラーマッチカードは、色・数字・効果を合わせてカードを出していく、ブラウザだけで遊べるオリジナルカードゲームです。公式名称、公式ロゴ、公式カードデザインは使わず、独自の名前と見た目で作っています。
 
-## How to Run
+## アプリ概要
 
-Open `index.html` in a browser. No build step, package install, or server is required.
+- 1人対CPUで遊べる静的Webアプリです。
+- `index.html` をリポジトリ直下に置いたまま、GitHub Pagesで公開できます。
+- ビルドや依存パッケージのインストールは不要です。
+- iPhone、iPad、PCで場と手札を見ながら遊べるレイアウトを目指しています。
 
-## How to Play
+## 遊び方
 
-- You play against one CPU player.
-- Each player starts with 7 cards.
-- Match the top discard by color, number, action, or play a Wild card.
-- If you cannot play, draw a card.
-- Skip and Reverse both skip the other player in this 1 vs CPU version.
-- The first player with no cards wins.
+1. タイトル画面で「ひとりであそぶ」を押します。
+2. 自分の番になったら、場のカードと同じ色、同じ数字、同じ効果のカードを出します。
+3. 色変えカードはいつでも出せます。
+4. 出せるカードがない場合は「1枚引く」を押します。
+5. 手札が0枚になったプレイヤーの勝ちです。
 
-## Cards
+## 基本ルール
 
-- Colors: red, blue, yellow, green
-- Numbers: 0-9
-- Actions: Skip, Reverse, Draw Two
-- Wilds: Wild, Wild Draw Four
+- 最初に各プレイヤーへ7枚ずつ配ります。
+- 数字カードは同じ色または同じ数字なら出せます。
+- 「休み」「逆回り」は、この1対1モードでは相手の手番を飛ばします。
+- 「+2」を出された側は、重ね出しできなければ累積枚数を引きます。
+- 「色変え+4」を出すと、次の色を選び、相手に4枚分のドローを渡します。
 
-## Local Rules
+## ローカルルール
 
-All local rules start OFF and can be toggled during play.
+ゲーム開始前の「ルール設定」でON/OFFできます。ゲーム中は変更せず、現在の設定だけを小さく表示します。
 
-- Same number stack: play multiple number cards with the same number at once. The last card played sets the next required color or value.
-- Draw Two stack: a Draw Two can be answered with another Draw Two. If not answered, the player draws the accumulated total.
-- Wild Draw Four stack: a Wild Draw Four can be answered with another Wild Draw Four.
-- Draw Two to Wild Draw Four: a Draw Two chain can be escalated with Wild Draw Four.
+- 同じ数字まとめ出し: 同じ数字カードを複数枚まとめて出せます。数字カードだけが対象です。
+- +2重ね: +2に+2を重ねられます。
+- 色変え+4重ね: 色変え+4に色変え+4を重ねられます。
+- +2に色変え+4を重ねる: +2の累積中に色変え+4を重ねられます。
 
-Important draw-chain rule: Wild Draw Four cannot be followed by Draw Two. Once a chain becomes a Wild Draw Four chain, only Wild Draw Four can be stacked.
+重要な累積ルール:
 
-## File Structure
+- +2 → 色変え+4 は、設定ONなら許可します。
+- 色変え+4 → +2 は禁止です。
+- +2 → +2 → 色変え+4 は、設定ONなら許可します。
+- +2 → 色変え+4 → +2 は禁止です。
+- 色変え+4 → 色変え+4 は、色変え+4重ねONなら許可します。
+
+## ルールプリセット
+
+- 標準ルール: すべてOFF
+- 家族ルール: 同じ数字まとめ出し、+2重ね、色変え+4重ねをON
+- 激しめルール: すべてON
+
+## 起動方法
+
+ローカルで簡単に確認する場合:
+
+```bash
+python -m http.server 8000
+```
+
+ブラウザで以下を開きます。
+
+```text
+http://localhost:8000
+```
+
+直接 `index.html` を開いても動く構成ですが、ES Modulesを使っているため、ブラウザによってはローカルサーバーでの確認が安定します。
+
+## GitHub Pages公開方法
+
+1. GitHubのリポジトリ画面を開く
+2. Settings を開く
+3. Pages を開く
+4. Source を Deploy from a branch にする
+5. Branch を main、folder を /root にする
+6. Saveする
+7. 表示されたURLにアクセスする
+
+## ファイル構成
 
 ```text
 /
 ├── index.html
 ├── README.md
+├── package.json
 ├── src/
 │   ├── main.js
 │   ├── game.js
@@ -50,25 +92,30 @@ Important draw-chain rule: Wild Draw Four cannot be followed by Draw Two. Once a
     └── style.css
 ```
 
-## GitHub Pages
+## テスト観点
 
-1. Open the GitHub repository page.
-2. Open Settings.
-3. Open Pages.
-4. Set Source to Deploy from a branch.
-5. Set Branch to `main` and Folder to `/root`.
-6. Save.
-7. Open the published URL shown by GitHub Pages.
+- タイトル画面、ルール設定、あそびかた画面を開けること
+- ひとりであそぶを押すとゲームが始まること
+- ゲームからメニューへ戻れること
+- もう一度で同じ設定のまま再スタートできること
+- 主要UIとカード表示が日本語になっていること
+- PC、iPad幅、iPhone幅で場と手札が同時に見えること
+- 手札が多い場合も手札エリア内で操作できること
+- 標準ルール、家族ルール、激しめルールのプリセットが反映されること
+- 同じ数字まとめ出しがON/OFFどおりに動くこと
+- +2重ね、色変え+4重ね、+2から色変え+4への重ね出しが動くこと
+- 色変え+4に+2を重ねられないこと
+- 累積ドローを引いた後、累積枚数が0に戻ること
+- CPUがカードを出す、引く、重ね出しすること
+- CPUの行動ログが最新3件で表示されること
+- 手札が0枚になったら勝敗表示に進むこと
 
-## Test Checklist
+## 今後の拡張案
 
-- Play matching color, number, and action cards.
-- Play Wild and choose the next color.
-- Toggle Same number stack and play multiple number cards.
-- Confirm Same number stack is unavailable when OFF.
-- Stack Draw Two and Wild Draw Four penalties.
-- Confirm Draw Two can become Wild Draw Four only when that local rule is ON.
-- Confirm Wild Draw Four cannot be followed by Draw Two.
-- Confirm CPU can play, draw, stack, and finish the game.
-- Restart and play a fresh game.
-- Check layout on phone, tablet, and desktop widths.
+- 2人対戦
+- 4人CPU対戦
+- CPU難易度
+- スコア記録
+- 効果音
+- チュートリアル
+- モード選択

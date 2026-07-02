@@ -1,4 +1,4 @@
-import { COLORS, createDeck, labelFor, shuffle } from "./deck.js";
+import { COLORS, colorName, createDeck, detailLabelFor, labelFor, shuffle } from "./deck.js";
 import { createPlayer, drawCards, removeCards } from "./player.js";
 
 export const defaultRules = {
@@ -10,7 +10,7 @@ export const defaultRules = {
 
 export function createGame(localRules = defaultRules) {
   const state = {
-    players: [createPlayer("You"), createPlayer("CPU", true)],
+    players: [createPlayer("あなた"), createPlayer("CPU", true)],
     currentPlayerIndex: 0,
     direction: 1,
     deck: createDeck(),
@@ -23,12 +23,14 @@ export function createGame(localRules = defaultRules) {
     drawPenaltyCount: 0,
     drawPenaltyType: null,
     message: "",
+    actionLog: [],
     shuffle,
   };
 
   state.players.forEach((player) => drawCards(state, player, 7));
   startDiscard(state);
-  state.message = "Your turn. Play a matching card or draw.";
+  state.message = "あなたの番です。出せるカードを選ぶか、カードを引いてください。";
+  addLog(state, "あなたの番です");
   return state;
 }
 
@@ -43,6 +45,7 @@ export function topDiscard(state) {
 export function canPlayCard(state, card) {
   if (state.isGameOver) return false;
 
+  // 累積ドロー中は、設定で許可された重ね出しだけを受け付ける。
   if (state.drawPenaltyCount > 0) {
     if (state.drawPenaltyType === "drawTwo") {
       return (
@@ -56,6 +59,7 @@ export function canPlayCard(state, card) {
     return false;
   }
 
+  // 通常時は色・数字・効果の一致、または色変えカードを許可する。
   if (card.type === "wild") return true;
   return card.color === state.currentColor || card.value === state.currentValue;
 }
@@ -76,11 +80,13 @@ export function canPlayStack(state, cards) {
 
 export function playCards(state, cards, chosenColor = null) {
   const player = currentPlayer(state);
-  if (!canPlayStack(state, cards)) return { ok: false, needsColor: false, message: "Those cards cannot be played now." };
+  if (!canPlayStack(state, cards)) {
+    return { ok: false, needsColor: false, message: "今はそのカードを出せません。" };
+  }
   const lastCard = cards[cards.length - 1];
 
   if (lastCard.type === "wild" && !COLORS.includes(chosenColor)) {
-    return { ok: false, needsColor: true, message: "Choose the next color." };
+    return { ok: false, needsColor: true, message: "次の色を選んでください。" };
   }
 
   removeCards(player, cards);
@@ -92,12 +98,15 @@ export function playCards(state, cards, chosenColor = null) {
   if (player.hand.length === 0) {
     state.isGameOver = true;
     state.winner = player.name;
-    state.message = `${player.name} wins!`;
+    state.message = player.isCpu ? "CPUの勝ちです。" : "あなたの勝ちです。";
+    addLog(state, `${player.name}の手札がなくなりました`);
     return { ok: true, gameOver: true };
   }
 
   advanceTurn(state, shouldSkipNext(lastCard));
-  state.message = `${player.name} played ${cards.map(labelFor).join(", ")}.`;
+  const playedText = cards.map(cardActionText).join("、");
+  state.message = `${player.name}が${playedText}を出しました。`;
+  addLog(state, `${player.name}が${playedText}を出しました${penaltySuffix(state)}`);
   return { ok: true };
 }
 
@@ -110,16 +119,19 @@ export function drawForCurrentPlayer(state) {
     state.drawPenaltyCount = 0;
     state.drawPenaltyType = null;
     advanceTurn(state);
-    state.message = `${player.name} drew ${count} penalty cards.`;
+    state.message = `${player.name}は${count}枚引きました。`;
+    addLog(state, `${player.name}は${count}枚引きました`);
     return { drawn: count, penalty: true };
   }
 
   const [card] = drawCards(state, player, 1);
   if (card && canPlayCard(state, card)) {
-    state.message = `${player.name} drew a playable card.`;
+    state.message = `${player.name}は出せるカードを1枚引きました。`;
+    addLog(state, `${player.name}は出せるカードを引きました`);
   } else {
     advanceTurn(state);
-    state.message = `${player.name} drew a card.`;
+    state.message = `${player.name}は1枚引きました。`;
+    addLog(state, `${player.name}は1枚引きました`);
   }
   return { drawn: card ? 1 : 0, card };
 }
@@ -135,6 +147,19 @@ export function chooseBestColor(hand) {
 
 export function updateRules(state, localRules) {
   state.localRules = { ...state.localRules, ...localRules };
+}
+
+function addLog(state, text) {
+  state.actionLog = [text, ...(state.actionLog || [])].slice(0, 3);
+}
+
+function cardActionText(card) {
+  const color = card.type === "wild" ? "" : `${colorName(card.color)}の`;
+  return `${color}${detailLabelFor(card) || labelFor(card)}`;
+}
+
+function penaltySuffix(state) {
+  return state.drawPenaltyCount > 0 ? `（現在 +${state.drawPenaltyCount}枚）` : "";
 }
 
 function startDiscard(state) {

@@ -1,61 +1,114 @@
-import { createGame, currentPlayer, playCards, updateRules } from "./game.js";
+import { createGame, currentPlayer, drawForCurrentPlayer, playCards } from "./game.js";
 import { takeCpuTurn } from "./cpu.js";
 import { createUI } from "./ui.js";
 
+const rulePresets = {
+  standard: {
+    sameNumberStack: false,
+    drawTwoStack: false,
+    drawFourStack: false,
+    drawTwoToDrawFourStack: false,
+  },
+  family: {
+    sameNumberStack: true,
+    drawTwoStack: true,
+    drawFourStack: true,
+    drawTwoToDrawFourStack: false,
+  },
+  wild: {
+    sameNumberStack: true,
+    drawTwoStack: true,
+    drawFourStack: true,
+    drawTwoToDrawFourStack: true,
+  },
+};
+
+const appState = {
+  screen: "title",
+  selectedMode: "soloCpu",
+  localRules: { ...rulePresets.standard },
+};
+
 let state;
-let selectedIds = new Set();
+let selectedOrder = [];
 let ui;
 
-function startGame() {
-  const rules = ui?.getRules() ?? {};
-  state = createGame(rules);
-  selectedIds = new Set();
-  ui?.setRules(state.localRules);
-  render();
+function showScreen(screen) {
+  appState.screen = screen;
+  ui.renderApp(appState, state, selectedOrder);
 }
 
-function render() {
-  ui.render(state, selectedIds);
-  if (!state.isGameOver && currentPlayer(state).isCpu) {
+function startGame() {
+  state = createGame(appState.localRules);
+  selectedOrder = [];
+  showScreen("game");
+  renderGame();
+}
+
+function renderGame() {
+  ui.renderApp(appState, state, selectedOrder);
+
+  if (appState.screen === "game" && !state?.isGameOver && currentPlayer(state).isCpu) {
     window.setTimeout(() => {
+      if (appState.screen !== "game" || state?.isGameOver || !currentPlayer(state).isCpu) return;
       takeCpuTurn(state);
-      selectedIds = new Set();
-      render();
+      selectedOrder = [];
+      renderGame();
     }, 650);
+  }
+
+  if (state?.isGameOver && appState.screen === "game") {
+    window.setTimeout(() => showScreen("result"), 500);
   }
 }
 
 function toggleCard(card) {
-  if (selectedIds.has(card.id)) {
-    selectedIds.delete(card.id);
+  if (selectedOrder.includes(card.id)) {
+    selectedOrder = selectedOrder.filter((id) => id !== card.id);
   } else {
-    selectedIds.add(card.id);
+    selectedOrder = [...selectedOrder, card.id];
   }
-  render();
+  renderGame();
 }
 
 async function playSelected() {
-  const cards = state.players[0].hand.filter((card) => selectedIds.has(card.id));
+  const cards = selectedOrder
+    .map((id) => state.players[0].hand.find((card) => card.id === id))
+    .filter(Boolean);
   const needsColor = cards[cards.length - 1]?.type === "wild";
   const color = needsColor ? await ui.askColor() : null;
   const result = playCards(state, cards, color);
+
   if (!result.ok) state.message = result.message;
-  selectedIds = new Set();
-  render();
+  selectedOrder = [];
+  renderGame();
 }
 
 function draw() {
-  import("./game.js").then(({ drawForCurrentPlayer }) => {
-    drawForCurrentPlayer(state);
-    selectedIds = new Set();
-    render();
-  });
+  drawForCurrentPlayer(state);
+  selectedOrder = [];
+  renderGame();
 }
 
-function rulesChanged(name, value) {
-  updateRules(state, { [name]: value });
-  render();
+function setRule(name, value) {
+  appState.localRules = { ...appState.localRules, [name]: value };
+  ui.renderApp(appState, state, selectedOrder);
 }
 
-ui = createUI({ draw, playSelected, restart: startGame, toggleCard, rulesChanged });
-startGame();
+function applyPreset(name) {
+  appState.localRules = { ...rulePresets[name] };
+  ui.renderApp(appState, state, selectedOrder);
+}
+
+ui = createUI({
+  draw,
+  playSelected,
+  restart: startGame,
+  toggleCard,
+  setRule,
+  applyPreset,
+  showScreen,
+  startGame,
+});
+
+showScreen("title");

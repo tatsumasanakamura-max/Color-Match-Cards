@@ -42,16 +42,28 @@ export function shuffle(cards) {
 export function labelFor(card) {
   if (!card) return "";
   const labels = {
-    skip: "Skip",
-    reverse: "Reverse",
+    skip: "休",
+    reverse: "逆",
     drawTwo: "+2",
-    wild: "Wild",
+    wild: "色",
     wildDrawFour: "+4",
   };
   return labels[card.value] || card.value;
 }
 
+export function detailLabelFor(card) {
+  if (!card) return "";
+  const labels = {
+    skip: "休み",
+    reverse: "逆回り",
+    drawTwo: "+2",
+    wild: "色変え",
+    wildDrawFour: "色変え+4",
+  };
+  return labels[card.value] || card.value;
+}
+
 export function colorName(color) {
-  const names = { red: "Red", blue: "Blue", yellow: "Yellow", green: "Green", wild: "Wild" };
+  const names = { red: "赤", blue: "青", yellow: "黄", green: "緑", wild: "色変え" };
   return names[color] || color;
 }

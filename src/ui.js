@@ -130,7 +130,7 @@ function renderGame(els, state, selectedOrder, handlers) {
   els.currentColor.textContent = colorName(state.currentColor);
   els.turnLabel.textContent = state.isGameOver ? "終了" : currentPlayer(state).name;
   els.penaltyLabel.textContent = state.drawPenaltyCount > 0 ? `+${state.drawPenaltyCount}枚` : "なし";
-  els.message.textContent = state.message;
+  els.message.textContent = messageText(state);
   els.playerCount.textContent = `${player.hand.length}枚`;
   els.drawCard.disabled = !isPlayerTurn;
   els.drawLabel.textContent = state.drawPenaltyCount > 0 ? `${state.drawPenaltyCount}枚引く` : "1枚引く";
@@ -144,8 +144,7 @@ function renderGame(els, state, selectedOrder, handlers) {
 }
 
 function renderPenalty(els, state) {
-  const active = state.drawPenaltyCount > 0;
-  els.penaltyBanner.hidden = !active;
+  els.penaltyBanner.hidden = true;
   els.penaltyDetail.textContent = `現在 +${state.drawPenaltyCount} 枚`;
   els.penaltyHelp.textContent = `出せるカードがなければ${state.drawPenaltyCount}枚引きます`;
 }
@@ -162,6 +161,11 @@ function renderLog(els, logs) {
     .slice(0, 2)
     .map((log) => `<li>${escapeHtml(shortLog(log))}</li>`)
     .join("");
+}
+
+function messageText(state) {
+  if (state.message) return state.message;
+  return state.actionLog?.[0] || "";
 }
 
 function cpuBackMarkup(count) {

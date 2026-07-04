@@ -103,13 +103,13 @@
           <div class="message notice-message" id="message" role="status" aria-live="polite"></div>
         </section>
 
-        <section class="penalty-banner" id="penalty-banner" aria-live="polite" hidden>
+        <section class="penalty-banner" id="penalty-banner" aria-live="polite" aria-hidden="true" hidden>
           <strong>ドローが重なっています！</strong>
           <span id="penalty-detail">現在 +0 枚</span>
           <small id="penalty-help">出せるカードがなければ引きます</small>
         </section>
 
-        <section class="info-row log-area" aria-label="行動ログ">
+        <section class="info-row log-area" aria-label="行動ログ" aria-hidden="true" hidden>
           <ol class="action-log" id="action-log" aria-label="行動ログ"></ol>
           <div class="active-rules" id="active-rules"></div>
         </section>
@@ -120,7 +120,9 @@
             <span class="play-hint">出せるカードを上にフリック</span>
             <span id="player-count">0枚</span>
           </div>
-          <div class="hand player-hand" id="player-hand"></div>
+          <div class="player-hand-wrapper">
+            <div class="hand player-hand" id="player-hand"></div>
+          </div>
         </section>
 
         <section class="action-panel action-area" aria-label="操作">

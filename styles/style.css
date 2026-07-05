@@ -115,6 +115,13 @@ p {
   gap: clamp(14px, 3vh, 24px);
   padding: clamp(10px, 2vw, 18px);
   text-align: center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+#settings-screen,
+#howto-screen {
+  align-content: start;
 }
 
 .menu-screen h1 {

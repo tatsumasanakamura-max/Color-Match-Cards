@@ -30,6 +30,13 @@
           <label><input type="checkbox" id="rule-draw-four" /> 色変え+4重ね</label>
           <label><input type="checkbox" id="rule-two-to-four" /> +2に色変え+4を重ねる</label>
         </div>
+        <div class="settings-list">
+          <strong>対戦形式</strong>
+          <label><input type="radio" name="total-rounds" value="1" checked /> 1回戦</label>
+          <label><input type="radio" name="total-rounds" value="3" /> 3回戦</label>
+          <label><input type="radio" name="total-rounds" value="5" /> 5回戦</label>
+          <label><input type="checkbox" id="double-final-odd-rounds" /> 3回戦目・5回戦目は点数2倍</label>
+        </div>
         <div class="preset-actions">
           <button id="preset-standard" class="secondary-action" type="button">標準ルール</button>
           <button id="preset-family" class="secondary-action" type="button">家族ルール</button>
@@ -65,6 +72,7 @@
         </header>
 
         <section class="cpu-panel" aria-label="CPU情報">
+          <div class="match-scorebar" id="match-scorebar" aria-label="回戦と合計得点">1/1回戦　あなた0点　CPU0点</div>
           <strong class="cpu-label">CPU</strong>
           <span id="cpu-count">0枚</span>
           <div class="cpu-hand-visual" id="cpu-hand" aria-label="CPUの手札"></div>

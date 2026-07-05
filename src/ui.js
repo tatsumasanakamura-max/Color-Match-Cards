@@ -1,5 +1,5 @@
 import { colorName, detailLabelFor, labelFor } from "./deck.js";
-import { canPlayCard, canPlayStack, currentPlayer, topDiscard } from "./game.js";
+import { canPlayCard, canPlayStack, currentPlayer, finalMatchWinner, topDiscard } from "./game.js";
 
 const FLICK_MIN_DISTANCE = 40;
 const FLICK_MAX_TIME = 500;
@@ -25,7 +25,10 @@ export function createUI(handlers) {
     backTitle: document.querySelector("#back-title"),
     resultRestart: document.querySelector("#result-restart"),
     resultTitle: document.querySelector("#result-title"),
+    resultNextRound: document.querySelector("#result-next-round"),
+    resultHeading: document.querySelector("#result-heading"),
     resultMessage: document.querySelector("#result-message"),
+    matchScorebar: document.querySelector("#match-scorebar"),
     cpuCount: document.querySelector("#cpu-count"),
     cpuHand: document.querySelector("#cpu-hand"),
     deckCount: document.querySelector("#deck-count"),
@@ -48,7 +51,21 @@ export function createUI(handlers) {
       drawFourStack: document.querySelector("#rule-draw-four"),
       drawTwoToDrawFourStack: document.querySelector("#rule-two-to-four"),
     },
+    matchSettings: {
+      totalRounds: [...document.querySelectorAll("input[name='total-rounds']")],
+      doubleFinalOddRounds: document.querySelector("#double-final-odd-rounds"),
+    },
   };
+
+  if (!els.resultNextRound) {
+    els.resultNextRound = document.createElement("button");
+    els.resultNextRound.id = "result-next-round";
+    els.resultNextRound.className = "primary-action";
+    els.resultNextRound.type = "button";
+    els.resultNextRound.textContent = "次の回戦へ";
+    els.resultNextRound.hidden = true;
+    els.resultRestart.parentElement.prepend(els.resultNextRound);
+  }
 
   els.startSolo.addEventListener("click", handlers.startGame);
   els.openSettings.addEventListener("click", () => handlers.showScreen("settings"));
@@ -59,6 +76,7 @@ export function createUI(handlers) {
   els.restart.addEventListener("click", handlers.restart);
   els.resultRestart.addEventListener("click", handlers.restart);
   els.resultTitle.addEventListener("click", () => handlers.showScreen("title"));
+  els.resultNextRound.addEventListener("click", handlers.nextRound);
   els.presetStandard.addEventListener("click", () => handlers.applyPreset("standard"));
   els.presetFamily.addEventListener("click", () => handlers.applyPreset("family"));
   els.presetWild.addEventListener("click", () => handlers.applyPreset("wild"));
@@ -68,12 +86,20 @@ export function createUI(handlers) {
   Object.entries(els.rules).forEach(([name, input]) => {
     input.addEventListener("change", () => handlers.setRule(name, input.checked));
   });
+  els.matchSettings.totalRounds.forEach((input) => {
+    input.addEventListener("change", () => handlers.setMatchSetting("totalRounds", Number(input.value)));
+  });
+  els.matchSettings.doubleFinalOddRounds.addEventListener("change", () => {
+    handlers.setMatchSetting("doubleFinalOddRounds", els.matchSettings.doubleFinalOddRounds.checked);
+  });
 
   return {
     renderApp(appState, gameState, selectedOrder = []) {
       renderScreens(els, appState.screen);
       renderRuleInputs(els, appState.localRules);
+      renderMatchSettingInputs(els, appState.matchSettings);
       if (gameState) renderGame(els, gameState, selectedOrder, handlers);
+      if (gameState) renderResult(els, gameState);
     },
 
     askColor() {
@@ -101,6 +127,13 @@ function renderRuleInputs(els, rules) {
   });
 }
 
+function renderMatchSettingInputs(els, matchSettings) {
+  els.matchSettings.totalRounds.forEach((input) => {
+    input.checked = Number(input.value) === Number(matchSettings.totalRounds);
+  });
+  els.matchSettings.doubleFinalOddRounds.checked = Boolean(matchSettings.doubleFinalOddRounds);
+}
+
 function renderGame(els, state, selectedOrder, handlers) {
   const player = state.players[0];
   const cpu = state.players[1];
@@ -110,6 +143,7 @@ function renderGame(els, state, selectedOrder, handlers) {
 
   els.cpuCount.textContent = `${cpu.hand.length}枚`;
   els.cpuHand.innerHTML = cpuBackMarkup(cpu.hand.length);
+  els.matchScorebar.textContent = `${state.matchState.currentRound}/${state.matchState.totalRounds}回戦　あなた${state.matchState.scores.player}点　CPU${state.matchState.scores.cpu}点`;
   els.deckCount.textContent = state.deck.length;
   renderCard(els.discardCard, topDiscard(state), true, state.currentColor);
   els.currentStatus.textContent = state.isGameOver
@@ -126,6 +160,47 @@ function renderGame(els, state, selectedOrder, handlers) {
   els.resultMessage.textContent = state.winner === "CPU" ? "CPUの勝ちです。" : "あなたの勝ちです。";
 
   renderHand(els, state, player, selectedSet, selectedOrder, isPlayerTurn, handlers);
+}
+
+function renderResult(els, state) {
+  if (!state.isGameOver) return;
+
+  const matchState = state.matchState;
+  const latest = matchState.roundResults.at(-1);
+  if (!latest) return;
+
+  els.resultHeading.textContent = matchState.isMatchOver ? `${matchState.totalRounds}回戦終了！` : `${latest.round}回戦終了`;
+  els.resultNextRound.hidden = matchState.isMatchOver;
+  els.resultRestart.hidden = !matchState.isMatchOver;
+  els.resultTitle.hidden = false;
+
+  if (matchState.isMatchOver) {
+    const winner = finalMatchWinner(matchState);
+    const winnerText =
+      winner === "draw" ? "同点です！" : `合計得点が少ない${winner === "player" ? "あなた" : "CPU"}の勝ち！`;
+    els.resultMessage.innerHTML = `
+      <span class="result-block-title">最終得点</span>
+      <span>あなた: ${matchState.scores.player}点</span>
+      <span>CPU: ${matchState.scores.cpu}点</span>
+      <strong>${winnerText}</strong>
+    `;
+    return;
+  }
+
+  els.resultMessage.innerHTML = `
+    ${latest.multiplier > 1 ? `<strong>この回は点数2倍！</strong>` : ""}
+    <span class="result-block-title">今回の点数</span>
+    <span>${scoreLine("あなた", latest.playerBaseScore, latest.playerScore, latest.multiplier)}</span>
+    <span>${scoreLine("CPU", latest.cpuBaseScore, latest.cpuScore, latest.multiplier)}</span>
+    <span class="result-block-title">合計</span>
+    <span>あなた: ${latest.playerTotal}点</span>
+    <span>CPU: ${latest.cpuTotal}点</span>
+  `;
+}
+
+function scoreLine(label, baseScore, score, multiplier) {
+  if (multiplier > 1) return `${label}: ${baseScore}点 x ${multiplier} = ${score}点`;
+  return `${label}: ${score}点`;
 }
 
 function messageText(state) {

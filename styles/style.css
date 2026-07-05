@@ -170,6 +170,17 @@ p {
   font-weight: 900;
 }
 
+.result-message {
+  display: grid;
+  gap: 8px;
+}
+
+.result-block-title {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.78em;
+}
+
 .game-screen {
   width: 100%;
   max-width: 100%;
@@ -240,6 +251,18 @@ p {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
+}
+
+.match-scorebar {
+  grid-column: 1 / -1;
+  min-width: 0;
+  color: var(--muted);
+  font-size: clamp(0.72rem, 3vw, 0.86rem);
+  font-weight: 900;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cpu-label,

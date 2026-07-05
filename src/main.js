@@ -1,4 +1,4 @@
-import { canPlayCard, createGame, currentPlayer, drawForCurrentPlayer, playCards } from "./game.js";
+import { canPlayCard, createGame, currentPlayer, drawForCurrentPlayer, playCards, startNextRound } from "./game.js";
 import { takeCpuTurn } from "./cpu.js";
 import { createUI } from "./ui.js";
 
@@ -27,6 +27,10 @@ const appState = {
   screen: "title",
   selectedMode: "soloCpu",
   localRules: { ...rulePresets.standard },
+  matchSettings: {
+    totalRounds: 1,
+    doubleFinalOddRounds: false,
+  },
 };
 
 let state;
@@ -39,7 +43,14 @@ function showScreen(screen) {
 }
 
 function startGame() {
-  state = createGame(appState.localRules);
+  state = createGame(appState.localRules, appState.matchSettings);
+  selectedOrder = [];
+  showScreen("game");
+  renderGame();
+}
+
+function nextRound() {
+  startNextRound(state);
   selectedOrder = [];
   showScreen("game");
   renderGame();
@@ -129,6 +140,11 @@ function setRule(name, value) {
   ui.renderApp(appState, state, selectedOrder);
 }
 
+function setMatchSetting(name, value) {
+  appState.matchSettings = { ...appState.matchSettings, [name]: value };
+  ui.renderApp(appState, state, selectedOrder);
+}
+
 function applyPreset(name) {
   appState.localRules = { ...rulePresets[name] };
   ui.renderApp(appState, state, selectedOrder);
@@ -140,9 +156,11 @@ ui = createUI({
   restart: startGame,
   toggleCard,
   setRule,
+  setMatchSetting,
   applyPreset,
   showScreen,
   startGame,
+  nextRound,
   flickCard,
   cardUnavailable,
 });

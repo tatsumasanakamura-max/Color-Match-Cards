@@ -8,7 +8,12 @@ export const defaultRules = {
   drawTwoToDrawFourStack: false,
 };
 
-export function createGame(localRules = defaultRules) {
+export const defaultMatchSettings = {
+  totalRounds: 1,
+  doubleFinalOddRounds: false,
+};
+
+export function createGame(localRules = defaultRules, matchSettings = defaultMatchSettings) {
   const state = {
     players: [createPlayer("あなた"), createPlayer("CPU", true)],
     currentPlayerIndex: 0,
@@ -25,6 +30,7 @@ export function createGame(localRules = defaultRules) {
     message: "",
     actionLog: [],
     shuffle,
+    matchState: createMatchState(matchSettings),
   };
 
   state.players.forEach((player) => drawCards(state, player, 7));
@@ -32,6 +38,29 @@ export function createGame(localRules = defaultRules) {
   state.message = "あなたの番です。出せるカードを選ぶか、カードを引いてください。";
   addLog(state, "あなたの番です");
   return state;
+}
+
+export function startNextRound(state) {
+  state.matchState.currentRound += 1;
+  state.currentPlayerIndex = 0;
+  state.direction = 1;
+  state.deck = createDeck();
+  state.discardPile = [];
+  state.currentColor = null;
+  state.currentValue = null;
+  state.isGameOver = false;
+  state.winner = null;
+  state.drawPenaltyCount = 0;
+  state.drawPenaltyType = null;
+  state.message = "";
+  state.actionLog = [];
+  state.players.forEach((player) => {
+    player.hand = [];
+    drawCards(state, player, 7);
+  });
+  startDiscard(state);
+  state.message = `${state.matchState.currentRound}/${state.matchState.totalRounds}回戦を開始しました。あなたの番です。`;
+  addLog(state, `${state.matchState.currentRound}回戦開始`);
 }
 
 export function currentPlayer(state) {
@@ -98,6 +127,7 @@ export function playCards(state, cards, chosenColor = null) {
   if (player.hand.length === 0) {
     state.isGameOver = true;
     state.winner = player.name;
+    finishRound(state, player);
     state.message = player.isCpu ? "CPUの勝ちです。" : "あなたの勝ちです。";
     addLog(state, `${player.name}の手札がなくなりました`);
     return { ok: true, gameOver: true };
@@ -147,6 +177,70 @@ export function chooseBestColor(hand) {
 
 export function updateRules(state, localRules) {
   state.localRules = { ...state.localRules, ...localRules };
+}
+
+export function getCardScore(card) {
+  if (card.type === "number") return Number(card.value) || 0;
+  if (card.value === "reverse") return 10;
+  if (card.value === "skip") return 10;
+  if (card.value === "drawTwo") return 15;
+  if (card.value === "wild") return 20;
+  if (card.value === "wildDrawFour") return 40;
+  return 0;
+}
+
+export function handScore(hand) {
+  return hand.reduce((total, card) => total + getCardScore(card), 0);
+}
+
+export function finalMatchWinner(matchState) {
+  if (matchState.scores.player < matchState.scores.cpu) return "player";
+  if (matchState.scores.cpu < matchState.scores.player) return "cpu";
+  return "draw";
+}
+
+function createMatchState(matchSettings) {
+  const totalRounds = [1, 3, 5].includes(Number(matchSettings.totalRounds)) ? Number(matchSettings.totalRounds) : 1;
+  return {
+    totalRounds,
+    currentRound: 1,
+    doubleFinalOddRounds: Boolean(matchSettings.doubleFinalOddRounds),
+    scores: {
+      player: 0,
+      cpu: 0,
+    },
+    roundResults: [],
+    isMatchOver: false,
+  };
+}
+
+function roundMultiplier(matchState) {
+  if (!matchState.doubleFinalOddRounds) return 1;
+  return matchState.currentRound === 3 || matchState.currentRound === 5 ? 2 : 1;
+}
+
+function finishRound(state, zeroHandPlayer) {
+  const matchState = state.matchState;
+  const playerBaseScore = handScore(state.players[0].hand);
+  const cpuBaseScore = handScore(state.players[1].hand);
+  const multiplier = roundMultiplier(matchState);
+  const playerScore = playerBaseScore * multiplier;
+  const cpuScore = cpuBaseScore * multiplier;
+
+  matchState.scores.player += playerScore;
+  matchState.scores.cpu += cpuScore;
+  matchState.isMatchOver = matchState.currentRound >= matchState.totalRounds;
+  matchState.roundResults.push({
+    round: matchState.currentRound,
+    multiplier,
+    playerBaseScore,
+    cpuBaseScore,
+    playerScore,
+    cpuScore,
+    playerTotal: matchState.scores.player,
+    cpuTotal: matchState.scores.cpu,
+    roundWinner: zeroHandPlayer.isCpu ? "cpu" : "player",
+  });
 }
 
 function addLog(state, text) {

@@ -1,13 +1,6 @@
 import { colorName, detailLabelFor, labelFor } from "./deck.js";
 import { canPlayCard, canPlayStack, currentPlayer, topDiscard } from "./game.js";
 
-const ruleLabels = {
-  sameNumberStack: "同じ数字まとめ出し",
-  drawTwoStack: "+2重ね",
-  drawFourStack: "色変え+4重ね",
-  drawTwoToDrawFourStack: "+2に色変え+4",
-};
-
 const FLICK_MIN_DISTANCE = 40;
 const FLICK_MAX_TIME = 500;
 const FLICK_MAX_SIDE_DISTANCE = 80;
@@ -41,12 +34,7 @@ export function createUI(handlers) {
     currentColor: document.querySelector("#current-color"),
     turnLabel: document.querySelector("#turn-label"),
     penaltyLabel: document.querySelector("#penalty-label"),
-    penaltyBanner: document.querySelector("#penalty-banner"),
-    penaltyDetail: document.querySelector("#penalty-detail"),
-    penaltyHelp: document.querySelector("#penalty-help"),
     message: document.querySelector("#message"),
-    actionLog: document.querySelector("#action-log"),
-    activeRules: document.querySelector("#active-rules"),
     playerCount: document.querySelector("#player-count"),
     playerHand: document.querySelector("#player-hand"),
     drawCard: document.querySelector("#draw-card"),
@@ -137,30 +125,7 @@ function renderGame(els, state, selectedOrder, handlers) {
   els.playStack.disabled = !isPlayerTurn || !canPlayStack(state, selected);
   els.resultMessage.textContent = state.winner === "CPU" ? "CPUの勝ちです。" : "あなたの勝ちです。";
 
-  renderPenalty(els, state);
-  renderRules(els, state.localRules);
-  renderLog(els, state.actionLog || []);
   renderHand(els, state, player, selectedSet, selectedOrder, isPlayerTurn, handlers);
-}
-
-function renderPenalty(els, state) {
-  els.penaltyBanner.hidden = true;
-  els.penaltyDetail.textContent = `現在 +${state.drawPenaltyCount} 枚`;
-  els.penaltyHelp.textContent = `出せるカードがなければ${state.drawPenaltyCount}枚引きます`;
-}
-
-function renderRules(els, rules) {
-  const active = Object.entries(rules)
-    .filter(([, enabled]) => enabled)
-    .map(([name]) => ruleLabels[name]);
-  els.activeRules.textContent = active.length ? `ON: ${active.join(" / ")}` : "ローカルルール: なし";
-}
-
-function renderLog(els, logs) {
-  els.actionLog.innerHTML = logs
-    .slice(0, 2)
-    .map((log) => `<li>${escapeHtml(shortLog(log))}</li>`)
-    .join("");
 }
 
 function messageText(state) {
@@ -169,37 +134,22 @@ function messageText(state) {
 }
 
 function cpuBackMarkup(count) {
-  const visible = Math.min(count, 6);
+  const visible = Math.min(count, 5);
   const backs = Array.from({ length: visible }, () => `<div class="card back cpu-card-back" aria-hidden="true"></div>`);
   if (count > visible) backs.push(`<span class="cpu-extra">+${count - visible}</span>`);
   return backs.join("");
 }
 
-function shortLog(log) {
-  return log
-    .replace(/^CPUが(.+)を出しました.*$/, "CPU：$1を出しました")
-    .replace(/^CPUは(\d+)枚引きました$/, "CPU：$1枚引きました")
-    .replace(/^CPUは1枚引きました$/, "CPU：1枚引きました")
-    .replace(/^CPUは出せるカードを引きました$/, "CPU：1枚引きました")
-    .replace(/^あなたが(.+)を出しました.*$/, "あなた：$1を出しました")
-    .replace(/^あなたは(\d+)枚引きました$/, "あなた：$1枚引きました")
-    .replace(/^あなたは1枚引きました$/, "あなた：1枚引きました")
-    .replace(/^あなたの番です$/, "あなたの番です");
-}
-
 function renderHand(els, state, player, selectedSet, selectedOrder, isPlayerTurn, handlers) {
   els.playerHand.innerHTML = "";
   els.playerHand.dataset.count = player.hand.length;
-  els.playerHand.classList.toggle("many-cards", player.hand.length >= 14);
-  els.playerHand.classList.toggle("crowded-cards", player.hand.length >= 20);
   const selected = selectedCards(player.hand, selectedOrder);
   player.hand.forEach((card) => {
-    const playable = canPlayCard(state, card);
     const selectable = isSelectableCard(state, card, selected);
     const isSelected = selectedSet.has(card.id);
     const button = document.createElement("button");
     button.type = "button";
-    button.className = cardClasses(card, isSelected, selectable, state.currentColor);
+    button.className = `${cardClasses(card, isSelected, selectable, state.currentColor)} player-card`;
     button.disabled = !isPlayerTurn;
     button.innerHTML = cardMarkup(card, selectionIndex(card, selectedOrder));
     button.title = selectable ? "選べるカード" : "今は出せないカード";
@@ -278,7 +228,7 @@ function selectedCards(hand, selectedOrder) {
 }
 
 function renderCard(element, card, large = false, activeColor = null) {
-  element.className = cardClasses(card, false, true, activeColor, large);
+  element.className = `${cardClasses(card, false, true, activeColor, large)} field-card`;
   element.innerHTML = card ? cardMarkup(card) : "開始";
 }
 
@@ -299,11 +249,4 @@ function cardMarkup(card, order = null) {
 function selectionIndex(card, selectedOrder) {
   const index = selectedOrder.indexOf(card.id);
   return index >= 0 ? index + 1 : null;
-}
-
-function escapeHtml(value) {
-  return value.replace(/[&<>"']/g, (char) => {
-    const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" };
-    return map[char];
-  });
 }

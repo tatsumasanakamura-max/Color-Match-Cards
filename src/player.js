@@ -1,5 +1,5 @@
-export function createPlayer(name, isCpu = false) {
-  return { name, isCpu, hand: [] };
+export function createPlayer(name, isCpu = false, id = name) {
+  return { id, name, isCpu, hand: [] };
 }
 
 export function drawCards(state, player, count) {

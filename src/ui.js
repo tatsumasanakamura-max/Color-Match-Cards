@@ -29,6 +29,7 @@ export function createUI(handlers) {
     resultHeading: document.querySelector("#result-heading"),
     resultMessage: document.querySelector("#result-message"),
     matchScorebar: document.querySelector("#match-scorebar"),
+    modeLabel: document.querySelector("#mode-label"),
     cpuCount: document.querySelector("#cpu-count"),
     cpuHand: document.querySelector("#cpu-hand"),
     deckCount: document.querySelector("#deck-count"),
@@ -50,8 +51,10 @@ export function createUI(handlers) {
       drawTwoStack: document.querySelector("#rule-draw-two"),
       drawFourStack: document.querySelector("#rule-draw-four"),
       drawTwoToDrawFourStack: document.querySelector("#rule-two-to-four"),
+      cannotFinishWithHighScoreCard: document.querySelector("#rule-high-score-finish"),
     },
     matchSettings: {
+      playerCount: [...document.querySelectorAll("input[name='player-count']")],
       totalRounds: [...document.querySelectorAll("input[name='total-rounds']")],
       doubleFinalOddRounds: document.querySelector("#double-final-odd-rounds"),
     },
@@ -88,6 +91,9 @@ export function createUI(handlers) {
   });
   els.matchSettings.totalRounds.forEach((input) => {
     input.addEventListener("change", () => handlers.setMatchSetting("totalRounds", Number(input.value)));
+  });
+  els.matchSettings.playerCount.forEach((input) => {
+    input.addEventListener("change", () => handlers.setMatchSetting("playerCount", Number(input.value)));
   });
   els.matchSettings.doubleFinalOddRounds.addEventListener("change", () => {
     handlers.setMatchSetting("doubleFinalOddRounds", els.matchSettings.doubleFinalOddRounds.checked);
@@ -128,6 +134,9 @@ function renderRuleInputs(els, rules) {
 }
 
 function renderMatchSettingInputs(els, matchSettings) {
+  els.matchSettings.playerCount.forEach((input) => {
+    input.checked = Number(input.value) === Number(matchSettings.playerCount || 2);
+  });
   els.matchSettings.totalRounds.forEach((input) => {
     input.checked = Number(input.value) === Number(matchSettings.totalRounds);
   });
@@ -136,18 +145,19 @@ function renderMatchSettingInputs(els, matchSettings) {
 
 function renderGame(els, state, selectedOrder, handlers) {
   const player = state.players[0];
-  const cpu = state.players[1];
+  const cpus = state.players.slice(1);
   const selectedSet = new Set(selectedOrder);
   const isPlayerTurn = currentPlayer(state) === player && !state.isGameOver;
   const selected = selectedCards(player.hand, selectedOrder);
 
-  els.cpuCount.textContent = `${cpu.hand.length}枚`;
-  els.cpuHand.innerHTML = cpuBackMarkup(cpu.hand.length);
-  els.matchScorebar.textContent = `${state.matchState.currentRound}/${state.matchState.totalRounds}回戦　あなた${state.matchState.scores.player}点　CPU${state.matchState.scores.cpu}点`;
+  els.modeLabel.textContent = `${state.players.length}人対戦`;
+  els.cpuCount.textContent = cpus.map((cpu) => `${cpu.name}: ${cpu.hand.length}枚`).join(" / ");
+  els.cpuHand.innerHTML = cpuBackMarkup(cpus, currentPlayer(state));
+  els.matchScorebar.textContent = `${state.matchState.currentRound}/${state.matchState.totalRounds}回戦　${scoreSummary(state)}`;
   els.deckCount.textContent = state.deck.length;
   renderCard(els.discardCard, topDiscard(state), true, state.currentColor);
   els.currentStatus.textContent = state.isGameOver
-    ? (state.winner === "CPU" ? "CPUの勝ち" : "あなたの勝ち")
+    ? `${state.winner}の勝ち`
     : `${colorName(state.currentColor)} / ${detailLabelFor(topDiscard(state))}`;
   els.currentColor.textContent = colorName(state.currentColor);
   els.turnLabel.textContent = state.isGameOver ? "終了" : currentPlayer(state).name;
@@ -157,7 +167,7 @@ function renderGame(els, state, selectedOrder, handlers) {
   els.drawCard.disabled = !isPlayerTurn;
   els.drawLabel.textContent = state.drawPenaltyCount > 0 ? `${state.drawPenaltyCount}枚引く` : "1枚引く";
   els.playStack.disabled = !isPlayerTurn || !canPlayStack(state, selected);
-  els.resultMessage.textContent = state.winner === "CPU" ? "CPUの勝ちです。" : "あなたの勝ちです。";
+  els.resultMessage.textContent = `${state.winner}の勝ちです。`;
 
   renderHand(els, state, player, selectedSet, selectedOrder, isPlayerTurn, handlers);
 }
@@ -175,13 +185,13 @@ function renderResult(els, state) {
   els.resultTitle.hidden = false;
 
   if (matchState.isMatchOver) {
-    const winner = finalMatchWinner(matchState);
+    const winnerIds = finalMatchWinner(matchState);
+    const winnerNames = winnerIds.map((id) => playerNameById(state, id));
     const winnerText =
-      winner === "draw" ? "同点です！" : `合計得点が少ない${winner === "player" ? "あなた" : "CPU"}の勝ち！`;
+      winnerNames.length > 1 ? `同点優勝: ${winnerNames.join("、")}` : `合計得点が少ない${winnerNames[0]}の勝ち！`;
     els.resultMessage.innerHTML = `
       <span class="result-block-title">最終得点</span>
-      <span>あなた: ${matchState.scores.player}点</span>
-      <span>CPU: ${matchState.scores.cpu}点</span>
+      ${state.players.map((player) => `<span>${player.name}: ${matchState.scores[player.id]}点</span>`).join("")}
       <strong>${winnerText}</strong>
     `;
     return;
@@ -190,11 +200,9 @@ function renderResult(els, state) {
   els.resultMessage.innerHTML = `
     ${latest.multiplier > 1 ? `<strong>この回は点数2倍！</strong>` : ""}
     <span class="result-block-title">今回の点数</span>
-    <span>${scoreLine("あなた", latest.playerBaseScore, latest.playerScore, latest.multiplier)}</span>
-    <span>${scoreLine("CPU", latest.cpuBaseScore, latest.cpuScore, latest.multiplier)}</span>
+    ${latest.players.map((result) => `<span>${scoreLine(result.name, result.baseScore, result.score, latest.multiplier)}</span>`).join("")}
     <span class="result-block-title">合計</span>
-    <span>あなた: ${latest.playerTotal}点</span>
-    <span>CPU: ${latest.cpuTotal}点</span>
+    ${latest.players.map((result) => `<span>${result.name}: ${result.total}点</span>`).join("")}
   `;
 }
 
@@ -208,7 +216,21 @@ function messageText(state) {
   return state.actionLog?.[0] || "";
 }
 
-function cpuBackMarkup(count) {
+function scoreSummary(state) {
+  return state.players.map((player) => `${player.name} ${state.matchState.scores[player.id] || 0}点`).join(" / ");
+}
+
+function playerNameById(state, id) {
+  return state.players.find((player) => player.id === id)?.name || id;
+}
+
+function cpuBackMarkup(cpus, current) {
+  if (cpus.length !== 1) {
+    return cpus
+      .map((cpu) => `<span class="cpu-extra ${current === cpu ? "active" : ""}">${cpu.name} ${cpu.hand.length}枚</span>`)
+      .join("");
+  }
+  const count = cpus[0]?.hand.length || 0;
   const visible = Math.min(count, 5);
   const backs = Array.from({ length: visible }, () => `<div class="card back cpu-card-back" aria-hidden="true"></div>`);
   if (count > visible) backs.push(`<span class="cpu-extra">+${count - visible}</span>`);
@@ -318,7 +340,9 @@ function cardMarkup(card, order = null) {
   if (!card) return "";
   const sub = card.type === "wild" ? detailLabelFor(card) : colorName(card.color);
   const badge = order ? `<span class="select-badge">${order}</span>` : "";
-  return `${badge}<span class="card-sub">${sub}</span><strong>${labelFor(card)}</strong><small>${detailLabelFor(card)}</small>`;
+  const label = labelFor(card);
+  const labelClass = label.length > 2 ? "card-main long" : "card-main";
+  return `${badge}<span class="card-sub">${sub}</span><strong class="${labelClass}">${label}</strong><small>${detailLabelFor(card)}</small>`;
 }
 
 function selectionIndex(card, selectedOrder) {

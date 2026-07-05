@@ -8,18 +8,21 @@ const rulePresets = {
     drawTwoStack: false,
     drawFourStack: false,
     drawTwoToDrawFourStack: false,
+    cannotFinishWithHighScoreCard: false,
   },
   family: {
     sameNumberStack: true,
     drawTwoStack: true,
     drawFourStack: true,
     drawTwoToDrawFourStack: false,
+    cannotFinishWithHighScoreCard: false,
   },
   wild: {
     sameNumberStack: true,
     drawTwoStack: true,
     drawFourStack: true,
     drawTwoToDrawFourStack: true,
+    cannotFinishWithHighScoreCard: true,
   },
 };
 
@@ -28,6 +31,7 @@ const appState = {
   selectedMode: "soloCpu",
   localRules: { ...rulePresets.standard },
   matchSettings: {
+    playerCount: 2,
     totalRounds: 1,
     doubleFinalOddRounds: false,
   },

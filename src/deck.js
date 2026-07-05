@@ -42,10 +42,10 @@ export function shuffle(cards) {
 export function labelFor(card) {
   if (!card) return "";
   const labels = {
-    skip: "休",
-    reverse: "逆",
+    skip: "Skip",
+    reverse: "Reverse",
     drawTwo: "+2",
-    wild: "色",
+    wild: "色変え",
     wildDrawFour: "+4",
   };
   return labels[card.value] || card.value;
@@ -54,9 +54,9 @@ export function labelFor(card) {
 export function detailLabelFor(card) {
   if (!card) return "";
   const labels = {
-    skip: "休み",
-    reverse: "逆回り",
-    drawTwo: "+2",
+    skip: "1回休み",
+    reverse: "順番反転",
+    drawTwo: "2枚引き",
     wild: "色変え",
     wildDrawFour: "色変え+4",
   };

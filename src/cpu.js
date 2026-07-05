@@ -1,4 +1,4 @@
-import { chooseBestColor, playableCards, playCards, drawForCurrentPlayer, canPlayStack } from "./game.js";
+import { canFinishWithCards, chooseBestColor, playableCards, playCards, drawForCurrentPlayer, canPlayStack } from "./game.js";
 
 const priority = {
   drawTwo: 1,
@@ -13,7 +13,7 @@ export function takeCpuTurn(state) {
   const cpu = state.players[state.currentPlayerIndex];
   if (!cpu?.isCpu) return;
 
-  const playable = playableCards(state, cpu);
+  const playable = playableCards(state, cpu).filter((card) => canFinishWithCards(state, cpu, [card]));
   if (playable.length === 0) {
     drawForCurrentPlayer(state);
     return;
@@ -33,7 +33,7 @@ function chooseCpuCards(state, playable, hand) {
   if (state.localRules.sameNumberStack && first.type === "number") {
     const stack = hand.filter((card) => card.type === "number" && card.value === first.value).slice(0, 3);
     const ordered = orderStackForColor(stack, hand);
-    if (canPlayStack(state, ordered)) return ordered;
+    if (canPlayStack(state, ordered) && canFinishWithCards(state, { hand }, ordered)) return ordered;
   }
   return [first];
 }

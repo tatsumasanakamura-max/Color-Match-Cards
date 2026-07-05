@@ -11,12 +11,16 @@
       <section class="screen menu-screen" id="title-screen" aria-labelledby="title-heading">
         <p class="eyebrow">オリジナルカードゲーム</p>
         <h1 id="title-heading">カラーマッチカード</h1>
+        <div class="settings-list title-settings" aria-label="対戦人数">
+          <strong>対戦人数</strong>
+          <label><input type="radio" name="player-count" value="2" checked /> 2人対戦</label>
+          <label><input type="radio" name="player-count" value="3" /> 3人対戦</label>
+          <label><input type="radio" name="player-count" value="4" /> 4人対戦</label>
+        </div>
         <div class="menu-actions">
-          <button id="start-solo" class="primary-action" type="button">ひとりであそぶ</button>
+          <button id="start-solo" class="primary-action" type="button">ゲーム開始</button>
           <button id="open-settings" class="secondary-action" type="button">ルール設定</button>
           <button id="open-howto" class="secondary-action" type="button">あそびかた</button>
-          <button class="secondary-action" type="button" disabled>2人対戦 準備中</button>
-          <button class="secondary-action" type="button" disabled>4人対戦 準備中</button>
           <button class="secondary-action" type="button" disabled>CPU難易度 準備中</button>
         </div>
       </section>
@@ -29,6 +33,10 @@
           <label><input type="checkbox" id="rule-draw-two" /> +2重ね</label>
           <label><input type="checkbox" id="rule-draw-four" /> 色変え+4重ね</label>
           <label><input type="checkbox" id="rule-two-to-four" /> +2に色変え+4を重ねる</label>
+          <label class="rule-with-description">
+            <span><input type="checkbox" id="rule-high-score-finish" /> 10点以上のカードでは上がれない</span>
+            <small>ONにすると、Skip / Reverse / +2 / 色変え / +4 を最後の1枚として出せません。数字カードで上がる必要があります。</small>
+          </label>
         </div>
         <div class="settings-list">
           <strong>対戦形式</strong>
@@ -62,7 +70,7 @@
       <section class="screen game-screen" id="game-screen" aria-label="ゲーム画面" hidden>
         <header class="game-header">
           <div>
-            <p class="eyebrow">ひとりであそぶ</p>
+            <p class="eyebrow" id="mode-label">2人対戦</p>
             <h1 class="game-title">カラーマッチカード</h1>
           </div>
           <div class="header-actions">
@@ -72,8 +80,8 @@
         </header>
 
         <section class="cpu-panel" aria-label="CPU情報">
-          <div class="match-scorebar" id="match-scorebar" aria-label="回戦と合計得点">1/1回戦　あなた0点　CPU0点</div>
-          <strong class="cpu-label">CPU</strong>
+          <div class="match-scorebar" id="match-scorebar" aria-label="回戦と合計得点">1/1回戦　あなた 0点 / CPU1 0点</div>
+          <strong class="cpu-label">相手の手札</strong>
           <span id="cpu-count">0枚</span>
           <div class="cpu-hand-visual" id="cpu-hand" aria-label="CPUの手札"></div>
         </section>

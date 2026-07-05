@@ -6,16 +6,19 @@ export const defaultRules = {
   drawTwoStack: false,
   drawFourStack: false,
   drawTwoToDrawFourStack: false,
+  cannotFinishWithHighScoreCard: false,
 };
 
 export const defaultMatchSettings = {
+  playerCount: 2,
   totalRounds: 1,
   doubleFinalOddRounds: false,
 };
 
 export function createGame(localRules = defaultRules, matchSettings = defaultMatchSettings) {
+  const players = createPlayers(matchSettings.playerCount);
   const state = {
-    players: [createPlayer("あなた"), createPlayer("CPU", true)],
+    players,
     currentPlayerIndex: 0,
     direction: 1,
     deck: createDeck(),
@@ -30,7 +33,7 @@ export function createGame(localRules = defaultRules, matchSettings = defaultMat
     message: "",
     actionLog: [],
     shuffle,
-    matchState: createMatchState(matchSettings),
+    matchState: createMatchState(matchSettings, players),
   };
 
   state.players.forEach((player) => drawCards(state, player, 7));
@@ -114,6 +117,10 @@ export function playCards(state, cards, chosenColor = null) {
   }
   const lastCard = cards[cards.length - 1];
 
+  if (!canFinishWithCards(state, player, cards)) {
+    return { ok: false, needsColor: false, message: "10点以上のカードでは上がれません" };
+  }
+
   if (lastCard.type === "wild" && !COLORS.includes(chosenColor)) {
     return { ok: false, needsColor: true, message: "次の色を選んでください。" };
   }
@@ -128,12 +135,12 @@ export function playCards(state, cards, chosenColor = null) {
     state.isGameOver = true;
     state.winner = player.name;
     finishRound(state, player);
-    state.message = player.isCpu ? "CPUの勝ちです。" : "あなたの勝ちです。";
+    state.message = `${player.name}の勝ちです。`;
     addLog(state, `${player.name}の手札がなくなりました`);
     return { ok: true, gameOver: true };
   }
 
-  advanceTurn(state, shouldSkipNext(lastCard));
+  advanceAfterCard(state, lastCard);
   const playedText = cards.map(cardActionText).join("、");
   state.message = `${player.name}が${playedText}を出しました。`;
   addLog(state, `${player.name}が${playedText}を出しました${penaltySuffix(state)}`);
@@ -189,26 +196,39 @@ export function getCardScore(card) {
   return 0;
 }
 
+export function canFinishWithCards(state, player, cards) {
+  if (!state.localRules.cannotFinishWithHighScoreCard) return true;
+  if (player.hand.length !== cards.length) return true;
+  const lastCard = cards[cards.length - 1];
+  return getCardScore(lastCard) < 10;
+}
+
 export function handScore(hand) {
   return hand.reduce((total, card) => total + getCardScore(card), 0);
 }
 
 export function finalMatchWinner(matchState) {
-  if (matchState.scores.player < matchState.scores.cpu) return "player";
-  if (matchState.scores.cpu < matchState.scores.player) return "cpu";
-  return "draw";
+  const entries = Object.entries(matchState.scores);
+  const minScore = Math.min(...entries.map(([, score]) => score));
+  return entries.filter(([, score]) => score === minScore).map(([id]) => id);
 }
 
-function createMatchState(matchSettings) {
+function createPlayers(playerCountSetting) {
+  const playerCount = [2, 3, 4].includes(Number(playerCountSetting)) ? Number(playerCountSetting) : 2;
+  return Array.from({ length: playerCount }, (_, index) => {
+    if (index === 0) return createPlayer("あなた", false, "player");
+    return createPlayer(`CPU${index}`, true, `cpu${index}`);
+  });
+}
+
+function createMatchState(matchSettings, players) {
   const totalRounds = [1, 3, 5].includes(Number(matchSettings.totalRounds)) ? Number(matchSettings.totalRounds) : 1;
+  const scores = Object.fromEntries(players.map((player) => [player.id, 0]));
   return {
     totalRounds,
     currentRound: 1,
     doubleFinalOddRounds: Boolean(matchSettings.doubleFinalOddRounds),
-    scores: {
-      player: 0,
-      cpu: 0,
-    },
+    scores,
     roundResults: [],
     isMatchOver: false,
   };
@@ -221,25 +241,26 @@ function roundMultiplier(matchState) {
 
 function finishRound(state, zeroHandPlayer) {
   const matchState = state.matchState;
-  const playerBaseScore = handScore(state.players[0].hand);
-  const cpuBaseScore = handScore(state.players[1].hand);
   const multiplier = roundMultiplier(matchState);
-  const playerScore = playerBaseScore * multiplier;
-  const cpuScore = cpuBaseScore * multiplier;
+  const playerResults = state.players.map((player) => {
+    const baseScore = handScore(player.hand);
+    const score = baseScore * multiplier;
+    matchState.scores[player.id] = (matchState.scores[player.id] || 0) + score;
+    return {
+      id: player.id,
+      name: player.name,
+      baseScore,
+      score,
+      total: matchState.scores[player.id],
+    };
+  });
 
-  matchState.scores.player += playerScore;
-  matchState.scores.cpu += cpuScore;
   matchState.isMatchOver = matchState.currentRound >= matchState.totalRounds;
   matchState.roundResults.push({
     round: matchState.currentRound,
     multiplier,
-    playerBaseScore,
-    cpuBaseScore,
-    playerScore,
-    cpuScore,
-    playerTotal: matchState.scores.player,
-    cpuTotal: matchState.scores.cpu,
-    roundWinner: zeroHandPlayer.isCpu ? "cpu" : "player",
+    players: playerResults,
+    roundWinner: zeroHandPlayer.id,
   });
 }
 
@@ -280,11 +301,21 @@ function applyCardEffect(state, card) {
   }
 }
 
-function shouldSkipNext(card) {
-  return card.value === "skip" || card.value === "reverse";
+function advanceAfterCard(state, card) {
+  if (card.value === "skip") {
+    advanceTurn(state, 2);
+    return;
+  }
+
+  if (card.value === "reverse") {
+    state.direction *= -1;
+    advanceTurn(state, state.players.length === 2 ? 2 : 1);
+    return;
+  }
+
+  advanceTurn(state, 1);
 }
 
-function advanceTurn(state, skip = false) {
-  const steps = skip ? 2 : 1;
+function advanceTurn(state, steps = 1) {
   state.currentPlayerIndex = (state.currentPlayerIndex + steps * state.direction + state.players.length) % state.players.length;
 }

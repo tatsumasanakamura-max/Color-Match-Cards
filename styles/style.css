@@ -155,6 +155,28 @@ p {
   font-weight: 900;
 }
 
+.title-settings {
+  width: min(420px, 100%);
+}
+
+.rule-with-description {
+  display: grid !important;
+  align-items: start !important;
+  gap: 4px !important;
+}
+
+.rule-with-description span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rule-with-description small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 .settings-list input {
   width: 22px;
   height: 22px;
@@ -267,13 +289,11 @@ p {
   font-size: clamp(0.72rem, 3vw, 0.86rem);
   font-weight: 900;
   line-height: 1.15;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .cpu-label,
-#cpu-count,
 .cpu-extra {
   white-space: nowrap;
   font-weight: 900;
@@ -284,13 +304,18 @@ p {
 }
 
 #cpu-count {
+  min-width: 0;
   font-size: clamp(0.95rem, 4.2vw, 1.25rem);
+  font-weight: 900;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .cpu-hand-visual {
   min-width: 0;
   max-width: 100%;
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
   gap: 3px;
@@ -307,6 +332,11 @@ p {
   color: #172130;
   background: #dfe7f0;
   font-size: 0.82rem;
+}
+
+.cpu-extra.active {
+  color: white;
+  background: #1f2d3d;
 }
 
 .field-panel {
@@ -577,6 +607,12 @@ p {
   place-self: center;
   font-size: clamp(1.6rem, 8vw, 2.3rem);
   line-height: 1;
+}
+
+.card-main.long {
+  font-size: clamp(1rem, 4.8vw, 1.45rem);
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .card.red {
